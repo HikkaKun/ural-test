@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Container, Row, Col, Form, Button,
+  Container, Form, Button,
   ListGroup, Alert, Spinner, Card,
 } from 'react-bootstrap';
 import {
@@ -46,28 +46,30 @@ export default function GoodsPage() {
     (analogues.length === 1 && isEmptyGoods(analogues[0]));
 
   return (
-    <Container className="mt-4" style={{ maxWidth: 900 }}>
+    <Container className="mt-4" style={{ maxWidth: 1200 }}>
       <h3 className="mb-3">Поиск товара</h3>
 
       <Form onSubmit={handleSubmit} className="mb-3">
-        <Row className="g-2">
-          <Col xs={12} md={7}>
-            <Form.Control
-              type="text"
-              placeholder="Номер товара"
-              value={goodsID}
-              onChange={(e) => dispatch(setGoodsID(e.target.value))}
-              disabled={isLoading}
-            />
-          </Col>
-          <Col xs={12} md="auto">
-            <Button type="submit" disabled={isLoading || !goodsID.trim()}>
-              {isLoading
-                ? <><Spinner size="sm" animation="border" className="me-2" />Загрузка…</>
-                : 'Найти бренды'}
-            </Button>
-          </Col>
-        </Row>
+        <div className='d-flex gap-2 align-items-center'>
+          <Form.Control
+            type="text"
+            placeholder="Номер товара"
+            value={goodsID}
+            onChange={(e) => dispatch(setGoodsID(e.target.value))}
+            disabled={isLoading}
+            style={{ flex: '1 1 auto', minWidth: 0 }}
+          />
+          <Button
+            type="submit"
+            disabled={isLoading || !goodsID.trim()}
+            className="flex-shrink-0 text-nowrap"
+            style={{ minWidth: 140 }}
+          >
+            {isLoading
+              ? <><Spinner size="sm" animation="border" className="me-2" />Загрузка…</>
+              : 'Найти бренды'}
+          </Button>
+        </div>
       </Form>
 
       {status === 'error' && (

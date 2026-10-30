@@ -31,7 +31,8 @@ export async function fetchGoods(params, signal) {
   return data;
 }
 
-export function fetchGoodsWithDefaultKey(params, signal) {
+export function fetchGoodsWithDefaultKeyAndInfo(params, signal) {
   params.key = KEY;
+  params.info = 'on';
   return fetchGoods(params, signal);
 } 

@@ -1,12 +1,12 @@
 import { configureStore, createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmptyGoods } from '../utils/isEmptyGoods';
-import { fetchGoodsWithDefaultKey } from '../api/api';
+import { fetchGoodsWithDefaultKeyAndInfo } from '../api/api';
 
 export const searchGoods = createAsyncThunk(
   'goods/search',
   async (goodsID, { rejectWithValue, signal }) => {
     try {
-      const data = await fetchGoodsWithDefaultKey({ number: goodsID }, signal);
+      const data = await fetchGoodsWithDefaultKeyAndInfo({ number: goodsID }, signal);
       if (data.error) return rejectWithValue({ status: 200, message: data.error });
       return data.goods;
     } catch (error) {
@@ -23,7 +23,7 @@ export const searchAnalogues = createAsyncThunk(
   'goods/searchAnalogues',
   async ({ goodsID, brand }, { rejectWithValue, getState, signal }) => {
     try {
-      const data = await fetchGoodsWithDefaultKey({ number: goodsID, brand, analogues: 'on' }, signal);
+      const data = await fetchGoodsWithDefaultKeyAndInfo({ number: goodsID, brand, analogues: 'on' }, signal);
       if (data.error) return rejectWithValue({ status: 200, message: data.error });
       const first = getState().goods.goods.find(goods => goods.brand === brand);
       if (!data.goods.length) return [first];

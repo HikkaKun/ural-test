@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
-import { Card,  Table } from 'react-bootstrap';
+import { Card, Table } from 'react-bootstrap';
 
 const COLUMNS = [
-  { key: 'brand', title: 'Бренд', width: '25%', filter: 'brand' },
+  { key: 'brand', title: 'Бренд', width: '20%', filter: 'brand' },
   { key: 'name', title: 'Название', width: '40%' },
-  { key: 'price', title: 'Цена', width: '17.5%', sortable: true, align: 'end' },
-  { key: 'count', title: 'Остаток', width: '17.5%', sortable: true, align: 'end' },
+  { key: 'price', title: 'Цена', width: '7.5%', sortable: true, align: 'end' },
+  { key: 'count', title: 'Остаток', width: '7.5%', sortable: true, align: 'end' },
+  { key: 'notRefund', title: 'Невозвратность', width: '15%', filter: 'notRefund' },
 ];
 
 function GoodsTable({ title, goods }) {
   const [sort, setSort] = useState(null);
   const [brandFilter, setBrandFilter] = useState('');
+  const [notRefundFilter, setNotRefundFilter] = useState('');
 
   const handleSort = (key) => {
     setSort((prev) => {
@@ -29,10 +31,16 @@ function GoodsTable({ title, goods }) {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [goods]);
 
-  const filtered = useMemo(
-    () => (brandFilter ? goods.filter((g) => g.brand === brandFilter) : goods),
-    [goods, brandFilter]
-  );
+  const filtered = useMemo(() => {
+    let result = goods;
+    if (brandFilter) result = result.filter(g => g.brand === brandFilter);
+    if (notRefundFilter) {
+      const bool = notRefundFilter === 'true';
+      result = result.filter(g => g.notRefund == bool);
+    }
+
+    return result;
+  }, [goods, brandFilter, notRefundFilter]);
 
   const sorted = useMemo(() => {
     if (!sort) return filtered;
@@ -55,7 +63,6 @@ function GoodsTable({ title, goods }) {
     <select
       value={brandFilter}
       onChange={(e) => setBrandFilter(e.target.value)}
-      onClick={(e) => e.stopPropagation()}
       className="form-select form-select-sm border-0 shadow-none bg-transparent"
       style={{
         cursor: 'pointer',
@@ -78,6 +85,34 @@ function GoodsTable({ title, goods }) {
       ))}
     </select>
   );
+
+  const notRefundHeader = (
+    <select
+      value={notRefundFilter}
+      onChange={(e) => setNotRefundFilter(e.target.value)}
+      className="form-select form-select-sm border-0 shadow-none bg-transparent"
+      style={{
+        cursor: 'pointer',
+        width: '100%',
+        padding: 0,
+        paddingRight: '1.1rem', // место под стрелку
+        backgroundPosition: 'right center',
+        fontWeight: 'inherit',
+        fontSize: 'inherit',
+        color: 'inherit',
+      }}
+      aria-label="Фильтр по невозвратным позициям"
+      title="Фильтр по невозвратным позициям">
+      <option value="">Невозврат: все</option>
+      <option value="true">Невозврат: да</option>
+      <option value="false">Невозврат: нет</option>
+    </select>
+  );
+
+  const customHeaders = {
+    brand: brandHeader,
+    notRefund: notRefundHeader,
+  }
 
   return (
     <Card className="mt-3">
@@ -107,7 +142,7 @@ function GoodsTable({ title, goods }) {
                 onClick={c.sortable ? () => handleSort(c.key) : undefined}
                 title={c.sortable ? 'Нажмите для сортировки' : undefined}
               >
-                {c.filter === 'brand' ? brandHeader : (
+                {customHeaders[c.filter] || (
                   <>
                     {c.title}
                     {c.sortable && sortIcon(c.key)}
@@ -129,7 +164,7 @@ function GoodsTable({ title, goods }) {
               <tr key={`${g.goodsID}-${g.brand}-${i}`}>
                 {COLUMNS.map((c) => (
                   <td key={c.key} className={c.align === 'end' ? 'text-end' : ''}>
-                    {g[c.key]}
+                    {c.key === 'notRefund' ? (g[c.key] ? 'Да' : 'Нет') : g[c.key]}
                   </td>
                 ))}
               </tr>
