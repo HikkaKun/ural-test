@@ -1,12 +1,21 @@
 import { configureStore, createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmptyGoods } from '../utils/isEmptyGoods';
-import { fetchGoodsWithDefaultKeyAndInfo } from '../api/api';
+import { fetchGoods } from '../api/api';
+
+const KEY = '00000000-0000-0000-0000-000000000001';
+
+export const FetchStatus = {
+  Idle: 'idle',
+  Loading: 'loading',
+  Success: 'success',
+  Error: 'error',
+}
 
 export const searchGoods = createAsyncThunk(
   'goods/search',
   async (goodsID, { rejectWithValue, signal }) => {
     try {
-      const data = await fetchGoodsWithDefaultKeyAndInfo({ number: goodsID }, signal);
+      const data = await fetchGoods({ key: KEY, number: goodsID }, signal);
       if (data.error) return rejectWithValue({ status: 200, message: data.error });
       return data.goods;
     } catch (error) {
@@ -23,9 +32,9 @@ export const searchAnalogues = createAsyncThunk(
   'goods/searchAnalogues',
   async ({ goodsID, brand }, { rejectWithValue, getState, signal }) => {
     try {
-      const data = await fetchGoodsWithDefaultKeyAndInfo({ number: goodsID, brand, analogues: 'on' }, signal);
+      const data = await fetchGoods({ key: KEY, number: goodsID, brand, analogues: 'on', info: 'on' }, signal);
       if (data.error) return rejectWithValue({ status: 200, message: data.error });
-      const first = getState().goods.goods.find(goods => goods.brand === brand);
+      const first = getState().goods.goods.find(g => g.brand === brand);
       if (!data.goods.length) return [first];
       const analogues = data.goods[0].analogues || [];
       return [first, ...analogues];
@@ -43,13 +52,13 @@ const goodsSlice = createSlice({
   name: 'goods',
   initialState: {
     goodsID: '',
-    status: 'idle', // idle | loading | success | error
+    status: FetchStatus.Idle,
     error: null,
     errorStatus: null,
     goods: [],
     notFound: false,
     selectedBrand: null,
-    analoguesStatus: 'idle',
+    analoguesStatus: FetchStatus.Idle,
     analoguesError: null,
     analoguesErrorStatus: null,
     analogues: [],
@@ -61,25 +70,25 @@ const goodsSlice = createSlice({
     selectBrand(state, action) {
       state.selectedBrand = action.payload;
       state.analogues = [];
-      state.analoguesStatus = 'idle';
+      state.analoguesStatus = FetchStatus.Idle;
       state.analoguesError = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(searchGoods.pending, (state) => {
-        state.status = 'loading';
+        state.status = FetchStatus.Loading;
         state.error = null;
         state.goods = [];
         state.notFound = false;
         state.selectedBrand = null;
         state.analogues = [];
-        state.analoguesStatus = 'idle';
+        state.analoguesStatus = FetchStatus.Idle;
         state.analoguesError = null;
         state.analoguesErrorStatus = null;
       })
       .addCase(searchGoods.fulfilled, (state, action) => {
-        state.status = 'success';
+        state.status = FetchStatus.Success;
         const goods = action.payload || [];
         if (goods.length === 1 && isEmptyGoods(goods[0])) {
           state.notFound = true;
@@ -90,22 +99,22 @@ const goodsSlice = createSlice({
       })
       .addCase(searchGoods.rejected, (state, action) => {
         if (action.meta.aborted) return;
-        state.status = 'error';
+        state.status = FetchStatus.Error;
         state.error = action.payload?.message || action.error.message || 'Ошибка запроса';
         state.errorStatus = action.payload?.status ?? null;
       })
       .addCase(searchAnalogues.pending, (state) => {
-        state.analoguesStatus = 'loading';
+        state.analoguesStatus = FetchStatus.Loading;
         state.analoguesError = null;
         state.analoguesErrorStatus = null;
       })
       .addCase(searchAnalogues.fulfilled, (state, action) => {
-        state.analoguesStatus = 'success';
+        state.analoguesStatus = FetchStatus.Success;
         state.analogues = action.payload || [];
       })
       .addCase(searchAnalogues.rejected, (state, action) => {
         if (action.meta.aborted) return;
-        state.analoguesStatus = 'error';
+        state.analoguesStatus = FetchStatus.Error;
         state.analoguesError = action.payload?.message || action.error.message || 'Ошибка запроса';
         state.analoguesErrorStatus = action.payload?.status ?? null;
       });

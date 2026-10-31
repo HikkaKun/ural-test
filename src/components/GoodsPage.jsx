@@ -8,6 +8,7 @@ import {
   setGoodsID, selectBrand,
   requestSearchAnalogues,
   requestSearchGoods,
+  FetchStatus,
 } from '../store/store';
 import { isEmptyGoods } from '../utils/isEmptyGoods';
 import GoodsTable from './GoodsTable';
@@ -20,27 +21,26 @@ export default function GoodsPage() {
     selectedBrand, analoguesStatus, analoguesError, analoguesErrorStatus, analogues,
   } = useSelector((s) => s.goods);
 
-  const handleSubmit = (e) => {
+  const onSubmit = (e) => {
     e.preventDefault();
     const id = goodsID.trim();
     if (!id) return;
     dispatch(requestSearchGoods(id));
   };
 
-  const handleBrandClick = (brand) => {
+  const onBrandClick = (brand) => {
     if (brand === selectedBrand) return;
     dispatch(selectBrand(brand));
     dispatch(requestSearchAnalogues({ goodsID: goodsID.trim(), brand }));
   };
 
-  // Уникальные бренды из ответа
   const brands = useMemo(() => {
     const set = new Set();
     goods.forEach((g) => { if (g.brand) set.add(g.brand); });
     return Array.from(set);
   }, [goods]);
 
-  const isLoading = status === 'loading';
+  const isLoading = status === FetchStatus.Loading;
   const analoguesEmpty =
     analogues.length === 0 ||
     (analogues.length === 1 && isEmptyGoods(analogues[0]));
@@ -49,7 +49,7 @@ export default function GoodsPage() {
     <Container className="mt-4" style={{ maxWidth: 1200 }}>
       <h3 className="mb-3">Поиск товара</h3>
 
-      <Form onSubmit={handleSubmit} className="mb-3">
+      <Form onSubmit={onSubmit} className="mb-3">
         <div className='d-flex gap-2 align-items-center'>
           <Form.Control
             type="text"
@@ -72,7 +72,7 @@ export default function GoodsPage() {
         </div>
       </Form>
 
-      {status === 'error' && (
+      {status === FetchStatus.Error && (
         <Alert variant={errorStatus === 403 ? 'warning' : 'danger'}>
           <strong>
             {errorStatus === 403 ? 'Доступ запрещён: ' : 'Ошибка: '}
@@ -81,11 +81,11 @@ export default function GoodsPage() {
         </Alert>
       )}
 
-      {status === 'success' && notFound && (
+      {status === FetchStatus.Success && notFound && (
         <Alert variant="warning">Товар не найден</Alert>
       )}
 
-      {status === 'success' && !notFound && brands.length > 0 && (
+      {status === FetchStatus.Success && !notFound && brands.length > 0 && (
         <Card className="mb-3">
           <Card.Header>Выберите бренд</Card.Header>
           <Card.Body className="p-0">
@@ -95,7 +95,7 @@ export default function GoodsPage() {
                   key={brand}
                   action
                   active={selectedBrand === brand}
-                  onClick={() => handleBrandClick(brand)}
+                  onClick={() => onBrandClick(brand)}
                 >
                   {brand}
                 </ListGroup.Item>
@@ -107,14 +107,14 @@ export default function GoodsPage() {
 
       {selectedBrand && (
         <>
-          {analoguesStatus === 'loading' && (
+          {analoguesStatus === FetchStatus.Loading && (
             <div className="my-3">
               <Spinner animation="border" size="sm" className="me-2" />
               Загрузка товаров и аналогов…
             </div>
           )}
 
-          {analoguesStatus === 'error' && (
+          {analoguesStatus === FetchStatus.Error && (
             <Alert variant={analoguesErrorStatus === 403 ? 'warning' : 'danger'}>
               <strong>
                 {analoguesErrorStatus === 403 ? 'Доступ запрещён: ' : 'Ошибка: '}
@@ -123,7 +123,7 @@ export default function GoodsPage() {
             </Alert>
           )}
 
-          {analoguesStatus === 'success' && (
+          {analoguesStatus === FetchStatus.Success && (
             analoguesEmpty
               ? <Alert variant="info">Аналоги не найдены</Alert>
               : (

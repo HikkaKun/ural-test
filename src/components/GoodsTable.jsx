@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Card, Table } from 'react-bootstrap';
+import SelectHeader from './SelectHeader';
+import { toFiniteNumber } from '../utils/parseNumber';
+import classNames from 'classnames';
 
 const COLUMNS = [
   { key: 'brand', title: 'Бренд', width: '20%', filter: 'brand' },
@@ -14,7 +17,7 @@ function GoodsTable({ title, goods }) {
   const [brandFilter, setBrandFilter] = useState('');
   const [notRefundFilter, setNotRefundFilter] = useState('');
 
-  const handleSort = (key) => {
+  const onSort = (key) => {
     setSort((prev) => {
       if (!prev || prev.key !== key) return { key, dir: 'asc' }
       if (prev.dir === 'asc') return { key, dir: 'desc' };
@@ -44,11 +47,9 @@ function GoodsTable({ title, goods }) {
 
   const sorted = useMemo(() => {
     if (!sort) return filtered;
-    const copy = [...filtered];
+    const copy = filtered.slice();
     copy.sort((a, b) => {
-      const na = Number(a[sort.key]);
-      const nb = Number(b[sort.key]);
-      const c = (Number.isFinite(na) ? na : 0) - (Number.isFinite(nb) ? nb : 0);
+      const c = toFiniteNumber(a[sort.key]) - toFiniteNumber(b[sort.key]);
       return sort.dir === 'asc' ? c : -c;
     });
     return copy;
@@ -60,22 +61,10 @@ function GoodsTable({ title, goods }) {
   }
 
   const brandHeader = (
-    <select
+    <SelectHeader
       value={brandFilter}
-      onChange={(e) => setBrandFilter(e.target.value)}
-      className="form-select form-select-sm border-0 shadow-none bg-transparent"
-      style={{
-        cursor: 'pointer',
-        width: '100%',
-        padding: 0,
-        paddingRight: '1.1rem', // место под стрелку
-        backgroundPosition: 'right center',
-        fontWeight: 'inherit',
-        fontSize: 'inherit',
-        color: 'inherit',
-      }}
-      aria-label="Фильтр по бренду"
-      title="Фильтр по бренду"
+      onChange={e => setBrandFilter(e.target.value)}
+      title='Фильтр по бренду'
     >
       <option value="">Бренд: все ({goods.length})</option>
       {brandsWithCounts.map(([b, cnt]) => (
@@ -83,30 +72,19 @@ function GoodsTable({ title, goods }) {
           {b} ({cnt})
         </option>
       ))}
-    </select>
+    </SelectHeader>
   );
 
   const notRefundHeader = (
-    <select
+    <SelectHeader
       value={notRefundFilter}
-      onChange={(e) => setNotRefundFilter(e.target.value)}
-      className="form-select form-select-sm border-0 shadow-none bg-transparent"
-      style={{
-        cursor: 'pointer',
-        width: '100%',
-        padding: 0,
-        paddingRight: '1.1rem', // место под стрелку
-        backgroundPosition: 'right center',
-        fontWeight: 'inherit',
-        fontSize: 'inherit',
-        color: 'inherit',
-      }}
-      aria-label="Фильтр по невозвратным позициям"
-      title="Фильтр по невозвратным позициям">
+      onChange={e => setNotRefundFilter(e.target.value)}
+      title={'Фильтр по невозвратным позициям'}
+    >
       <option value="">Невозврат: все</option>
       <option value="true">Невозврат: да</option>
       <option value="false">Невозврат: нет</option>
-    </select>
+    </SelectHeader>
   );
 
   const customHeaders = {
@@ -115,7 +93,7 @@ function GoodsTable({ title, goods }) {
   }
 
   return (
-    <Card className="mt-3">
+    <Card className="mt-3 mb-5">
       <Card.Header className="d-flex justify-content-between align-items-center">
         <span className="text-truncate">{title}</span>
         <small className="text-muted fw-normal ms-2 flex-shrink-0">
@@ -134,20 +112,12 @@ function GoodsTable({ title, goods }) {
             {COLUMNS.map((c) => (
               <th
                 key={c.key}
-                className={[
-                  c.align === 'end' ? 'text-end' : '',
-                  c.sortable ? 'user-select-none' : '',
-                ].join(' ').trim() || undefined}
+                className={classNames({ 'text-end': c.align === 'end', 'user-select-none': c.sortable })}
                 style={c.sortable ? { cursor: 'pointer' } : undefined}
-                onClick={c.sortable ? () => handleSort(c.key) : undefined}
+                onClick={c.sortable ? () => onSort(c.key) : undefined}
                 title={c.sortable ? 'Нажмите для сортировки' : undefined}
               >
-                {customHeaders[c.filter] || (
-                  <>
-                    {c.title}
-                    {c.sortable && sortIcon(c.key)}
-                  </>
-                )}
+                {customHeaders[c.filter] || (<>{c.title}{c.sortable && sortIcon(c.key)}</>)}
               </th>
             ))}
           </tr>
